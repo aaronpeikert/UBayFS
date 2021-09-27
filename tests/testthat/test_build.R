@@ -78,7 +78,7 @@ test_that("ensemble is trained correctly",{
     data = wbc$data,
     target = wbc$labels,
   )
-  expect_equal(unname(model$ensemble.params$output$counts),
+  expect_equal(unname(model$ensemble.params$output[[1]]),
                c(0, 10, 74, 0, 0, 0, 100, 100, 0, 0, 0, 0, 6, 100, 0, 0, 6, 0, 0, 0, 100, 86, 100, 100, 2, 16, 100, 100, 0, 0))
 
   model <- build.UBaymodel(
@@ -87,7 +87,7 @@ test_that("ensemble is trained correctly",{
     tt_split = 0.9,
     nr_features = 2,
   )
-  expect_equal(unname(model$ensemble.params$output$counts),
+  expect_equal(unname(model$ensemble.params$output[[1]]),
                c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 100, 0, 0))
 
   model <- build.UBaymodel(
@@ -96,7 +96,7 @@ test_that("ensemble is trained correctly",{
     M = 10,
     method = "Laplacian score",
   )
-  expect_equal(unname(model$ensemble.params$output$counts),
+  expect_equal(unname(model$ensemble.params$output[[1]]),
                c(10, 0, 10, 10, 0, 0, 10, 10, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 10, 0, 10, 10, 0, 0, 0, 10, 0, 0))
 
 })

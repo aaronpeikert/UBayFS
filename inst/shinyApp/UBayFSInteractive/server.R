@@ -314,7 +314,7 @@ shinyServer(function(input, output, session) {
     })
 
     likelihood_complete <- reactive({
-      ifelse(!data_complete() | is.null(model()$ensemble.params$output$counts), FALSE, TRUE)
+      ifelse(!data_complete() | is.null(model()$ensemble.params$output), FALSE, TRUE)
     })
 
     weighting_complete <- reactive({
@@ -458,7 +458,7 @@ shinyServer(function(input, output, session) {
       if(!is.null(model()$ensemble.params)){
         ggplot2::ggplot(
           data = data.frame(features = factor(names_feats(), levels = names_feats()),
-                            counts = model()$ensemble.params$output$counts),
+                            counts = model()$ensemble.params$output[[1]]),
           aes(x = features,
               y = counts))+
         geom_bar(stat = "identity", position = position_dodge(), fill = RColorBrewer::brewer.pal(3,"Blues")[2])+

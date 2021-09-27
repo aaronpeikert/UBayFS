@@ -10,7 +10,7 @@ getResults <- function(model){
   map = model$output$map
   rownames(map) = NULL
   NO = 1:nrow(map)
-  post_param = model$user.params$weights + model$ensemble.params$output$counts
+  post_param = model$user.params$weights + model$ensemble.params$output[[1]]
 
   feature_sets = apply(map, 1, function(x){
     paste0(which(x == 1), collapse = ",")

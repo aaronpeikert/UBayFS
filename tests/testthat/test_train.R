@@ -19,7 +19,8 @@ test_that("correct results in train.UBaymodel",{
     optim_method = "GA",
     popsize = 50,
     maxiter = 100,
-    shiny = FALSE
+    shiny = FALSE,
+    dmax = 1
   )
 
   # run with wrong input
@@ -46,7 +47,7 @@ test_that("correct results in train.UBaymodel",{
             rho = c(c$rho, const_new$rho))
   model <- setConstraints(model, c)
   model <- train(model)
-  expect_equal(unname(which(model$output$map == 1)), c(2,5,7,21,22,23,24,25,27,28))
+  expect_equal(unname(which(model$output$map == 1)), c(2,7,15,21,22,23,24,25,27,28))
 
 
   # train model (with distinct optim.params)

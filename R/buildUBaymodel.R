@@ -7,6 +7,7 @@
 #' @param tt_split the ratio of samples drawn for building an elementary model (train-test-split)
 #' @param nr_features number of features to select in each elementary model
 #' @param method a vector denoting the method(s) used as elementary models; options: "mRMR", "Laplacian score"
+#' @param dmax an positive integer denoting the maximum degree of feature interactions considered in the model
 #' @param constraints a list containing a relaxed system Ax<=b of user constraints, given as matrix A, vector b and vector or scalar rho (relaxation parameters); see buildConstraints function
 #' @param block_constraints a list containing a relaxed system Ax<=b of user constraints on feature blocks, given as matrix A, vector b and vector or scalar rho (relaxation parameters); see buildConstraints function
 #' @param weights the vector of user-defined prior weights for each feature
@@ -26,6 +27,7 @@
 #' model <- build.UBaymodel(
 #'                      data = wbc$data,
 #'                      target = wbc$labels,
+#'                      dmax = 2,
 #'                      constraints = c,
 #'                      weights = w
 #' )
@@ -39,6 +41,7 @@
 #' model <- build.UBaymodel(
 #'                      data = wbc$data,
 #'                      target = wbc$labels,
+#'                      dmax = 2,
 #'                      constraints = c,
 #'                      block_constraints = c_block,
 #'                      weights = w
@@ -54,12 +57,13 @@ build.UBaymodel = function(data, target, 															# data + labels
                        M = 100, tt_split = 0.75, 												# number of train-test-splits, split ratio
                        nr_features = 10,														# number of features to select by elementary FS
                        method = "mRMR",
+                       dmax = 2, 														   # max. degree of dependencies
                        constraints = NULL,
                        block_constraints = NULL,
                        weights = 1, 														# user weights
                        optim_method = "GA",
                        #constraint_dropout_rate = 0.1,
-                       #popGreedy = 20, 														# number of initial candidates from Greedy algorithm
+                       #popGreedy = 20,														# number of initial candidates from Greedy algorithm
                        popsize = 50, 														# number of initial candidates (total)
                        maxiter = 100,
                        shiny = FALSE){														# elementary FS to use
@@ -82,6 +86,16 @@ build.UBaymodel = function(data, target, 															# data + labels
   }
   if(!all(method %in% c("mRMR", "mrmr", "Laplacian score", "laplace"))){
     stop("Error: unknown method")
+  }
+  if(dmax %% 1 != 0 | dmax < 0){
+    stop("Error: dmax must be a positive integer")
+  }
+  else if(dmax > ncol(data)){
+    dmax = 2
+    warning("dmax cannot be larger than the number of features. Setting it to dmax = 2")
+  }
+  else if(dmax > 3 & ncol(data) > 30){
+    warning("high dmax and a large number of features may take forever to compute...")
   }
 
   # initialize matrix
@@ -140,8 +154,28 @@ build.UBaymodel = function(data, target, 															# data + labels
   }
 
   # structure results
-  counts = colSums(ensemble_matrix)
-  names(counts) = colnames(data)
+  count_list <- list()
+  for(d in 1:dmax){
+    if(d > 1){
+      n = choose(ncol(data), d)
+      trans_mat = matrix(0, nrow = n, ncol = ncol(data))
+
+      ind_mat <- t(combn(1:ncol(data), d))
+      labs <- apply(ind_mat, 1, paste, collapse = ",")
+
+      trans_mat[cbind(1:n, as.vector(ind_mat))] <- 1
+      mat = ensemble_matrix %*% t(trans_mat) >= d
+      colnames(mat) <- labs
+    }
+    else{
+      mat = ensemble_matrix
+      colnames(mat) <- 1:ncol(data)
+    }
+    count_list[[d]] <- colSums(mat)
+  }
+  count_list <- count_list
+  #counts = colSums(ensemble_matrix)
+  #names(counts) = colnames(data)
 
   # define return object
   obj = list(
@@ -151,8 +185,10 @@ build.UBaymodel = function(data, target, 															# data + labels
       input = list( tt_split = tt_split,
                     M = M,
                     method = method,
-                    nr_features = nr_features),
-      output = list(counts = counts)
+                    nr_features = nr_features,
+                    dmax = dmax),
+      #output = list(counts = counts)
+      output = count_list
     )
   )
   class(obj) = "UBaymodel"

@@ -23,14 +23,14 @@ train.UBaymodel = function(x){
   alpha = as.numeric(x$user.params$weights)
 
   # define ensemble counts
-  delta = as.numeric(x$ensemble.params$output$counts)
-
-  # calculate posterior parameter
-  post_param = alpha + delta
+  #delta = as.numeric(x$ensemble.params$output)
 
   if(x$optim.params$method == "GA"){
     print("Running Genetic Algorithm")
-    x$output <- train_GA(post_param,
+    x$output <- train_GA(alpha,
+                         #delta,
+                         x$ensemble.params$output,
+                         x$ensemble.params$input$dmax,
                          x$user.params$constraints,
                          x$user.params$block_constraints,
                          x$optim.params,
@@ -38,7 +38,10 @@ train.UBaymodel = function(x){
   }
   else if(x$optim.params$method == "MH"){
     print("Running Metropolis-Hastings Algorithm")
-    x$output <- train_MH(post_param,
+    x$output <- train_MH(alpha,
+                         #delta,
+                         x$ensemble.params$output,
+                         x$ensemble.params$input$dmax,
                          x$user.params$constraints,
                          x$user.params$block_constraints,
                          x$optim.params,
@@ -51,32 +54,18 @@ train.UBaymodel = function(x){
   return(x)
 }
 
-train_GA <- function(post_param, constraints, block_constraints, optim_params, feat_names){
+train_GA <- function(weights, counts, dmax, constraints, block_constraints, optim_params, feat_names){
 
-  # optimization using GA
-  #target_fct = function(state){								# target function for optimization procedure
-  #  return(
-  #    admissibility(state, 									# log-admissibility function
-  #                  constraints,
-  #                  sum(post_param),
-  #                  log = TRUE) +
-  #      block_admissibility(state, 									# log-admissibility function
-  #                          constraints = block_constraints,
-  #                          sum(post_param) / nrow(block_constraints$block_matrix),
-  #                          log = TRUE) +
-  #      ddirichlet(t(state + 0.01), 							# log-dirichlet-density (with small epsilon to avoid errors from 0 probs)
-  #                 alpha = post_param,
-  #                 log = TRUE)
-  #  )
-  #}
   target_fct <- function(state){return(posterior(state,
                                                  constraints = constraints,
                                                  block_constraints = block_constraints,
-                                                 post_param = post_param,
+                                                 weights = weights,
+                                                 counts = counts,
+                                                 dmax = dmax,
                                                  log = TRUE))}
 
   # Greedy algorithm to select starting vectors
-  x_start = sampleInitial(post_scores = post_param,
+  x_start = sampleInitial(post_scores = weights + as.numeric(counts[[1]]),
                           constraints = constraints,
                           block_constraints = block_constraints,
                           size = optim_params$popsize)
@@ -86,7 +75,7 @@ train_GA <- function(post_param, constraints, block_constraints, optim_params, f
              fitness = target_fct,
              lower = 0,
              upper = 1,
-             nBits = length(post_param),
+             nBits = length(weights),
              maxiter = optim_params$maxiter,
              popSize = optim_params$popsize,
              suggestions = x_start
@@ -105,33 +94,19 @@ train_GA <- function(post_param, constraints, block_constraints, optim_params, f
 
 #' @importFrom plyr count
 
-train_MH = function(post_param, constraints, block_constraints, optim_params, feat_names){
+train_MH = function(weights, counts, dmax, constraints, block_constraints, optim_params, feat_names){
 
-  # posterior density
-  #target_fct = function(state){								# target function for optimization procedure
-  #  return(
-  #    admissibility(state, 									# log-admissibility function
-  #                  constraints,
-  #                  sum(post_param),
-  #                  log = TRUE) +
-  #      block_admissibility(state, 									# log-admissibility function
-  #                          block_constraints,
-  #                          sum(post_param) / nrow(block_constraints$block_matrix),
-  #                          log = TRUE) +
-  #      ddirichlet(t(state + 0.01), 							# log-dirichlet-density (with small epsilon to avoid errors from 0 probs)
-  #                 alpha = post_param,
-  #                 log = TRUE)
-  #  )
-  #}
   target_fct <- function(state){return(posterior(state,
                                                  constraints = constraints,
                                                  block_constraints = block_constraints,
-                                                 post_param = post_param,
+                                                 weights = weights,
+                                                 counts = counts,
+                                                 dmax = dmax,
                                                  log = TRUE))}
 
   # empirical density of proposal
   proposal_sample_size <- optim_params$popsize * optim_params$maxiter
-  proposal_sample <- sampleInitial(post_scores = post_param,
+  proposal_sample <- sampleInitial(post_scores = weights + as.numeric(counts[[1]]),
                                     constraints = constraints,
                                     block_constraints = block_constraints,
                                     size = proposal_sample_size)
@@ -151,8 +126,8 @@ train_MH = function(post_param, constraints, block_constraints, optim_params, fe
 
 
   # sample from proposal density
-  X <- matrix(, nrow = 0, ncol = length(post_param))        # MCMC history
-  x_t = sampleInitial(post_scores = post_param,
+  X <- matrix(, nrow = 0, ncol = length(weights))        # MCMC history
+  x_t = sampleInitial(post_scores = weights + as.numeric(counts[[1]]),
                       constraints = constraints,
                       block_constraints = block_constraints,
                       size = optim_params$popsize)
@@ -164,7 +139,7 @@ train_MH = function(post_param, constraints, block_constraints, optim_params, fe
   for(t in 1:optim_params$maxiter){
     print(t)
     # new sample from proposal density
-    x_new = sampleInitial(post_scores = post_param,
+    x_new = sampleInitial(post_scores = weights + as.numeric(counts[[1]]),
                           constraints = constraints,
                           block_constraints = block_constraints,
                           size = optim_params$popsize)

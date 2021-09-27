@@ -21,7 +21,7 @@ plot_UBaymodel <- function(x,...){
 
   df <- data.frame(
     feature = factor(rep(names_feats,2), levels = names_feats),
-    counts = c(x$ensemble.params$output$counts,
+    counts = c(x$ensemble.params$output[[1]],
               x$user.params$weights),
     weights = factor(rep(c("ensemble", "prior"), each = length(names_feats)), levels = c("ensemble", "prior"))
   )

@@ -11,6 +11,7 @@ build.UBaymodel(
   tt_split = 0.75,
   nr_features = 10,
   method = "mRMR",
+  dmax = 2,
   constraints = NULL,
   block_constraints = NULL,
   weights = 1,
@@ -32,6 +33,8 @@ build.UBaymodel(
 \item{nr_features}{number of features to select in each elementary model}
 
 \item{method}{a vector denoting the method(s) used as elementary models; options: "mRMR", "Laplacian score"}
+
+\item{dmax}{an positive integer denoting the maximum degree of feature interactions considered in the model}
 
 \item{constraints}{a list containing a relaxed system Ax<=b of user constraints, given as matrix A, vector b and vector or scalar rho (relaxation parameters); see buildConstraints function}
 
@@ -67,6 +70,7 @@ w <- rep(1, ncol(wbc$data)) # weights
 model <- build.UBaymodel(
                      data = wbc$data,
                      target = wbc$labels,
+                     dmax = 2,
                      constraints = c,
                      weights = w
 )
@@ -80,6 +84,7 @@ c_block <- buildConstraints(constraint_types = "max_size",
 model <- build.UBaymodel(
                      data = wbc$data,
                      target = wbc$labels,
+                     dmax = 2,
                      constraints = c,
                      block_constraints = c_block,
                      weights = w
