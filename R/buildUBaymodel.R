@@ -146,6 +146,7 @@ build.UBaymodel = function(data, target, 															# data + labels
       # generate matrix of selected features
       ensemble_matrix = rbind(ensemble_matrix, vec)
       rownames(ensemble_matrix)[nrow(ensemble_matrix)] = paste(f, i)
+      colnames(ensemble_matrix) = colnames(data)
     }
 
     if(shiny){
@@ -154,26 +155,27 @@ build.UBaymodel = function(data, target, 															# data + labels
   }
 
   # structure results
-  count_list <- list()
-  for(d in 1:dmax){
-    if(d > 1){
-      n = choose(ncol(data), d)
-      trans_mat = matrix(0, nrow = n, ncol = ncol(data))
+  #count_list <- list()
+  #for(d in 1:dmax){
+  #  if(d > 1){
+  #    n = choose(ncol(data), d)
+  #    trans_mat = matrix(0, nrow = n, ncol = ncol(data))#
 
-      ind_mat <- t(combn(1:ncol(data), d))
-      labs <- apply(ind_mat, 1, paste, collapse = ",")
+  #    ind_mat <- t(combn(1:ncol(data), d))
+  #    labs <- apply(ind_mat, 1, paste, collapse = ",")#
 
-      trans_mat[cbind(1:n, as.vector(ind_mat))] <- 1
-      mat = ensemble_matrix %*% t(trans_mat) >= d
-      colnames(mat) <- labs
-    }
-    else{
-      mat = ensemble_matrix
-      colnames(mat) <- 1:ncol(data)
-    }
-    count_list[[d]] <- colSums(mat)
-  }
-  count_list <- count_list
+  #    trans_mat[cbind(1:n, as.vector(ind_mat))] <- 1
+  #    mat = ensemble_matrix %*% t(trans_mat) >= d
+  #    colnames(mat) <- labs
+  #  }
+  #  else{
+  #    mat = ensemble_matrix
+  #    colnames(mat) <- 1:ncol(data)
+  #  }
+  #  count_list[[d]] <- colSums(mat)
+  #}
+  #count_list <- count_list
+
   #counts = colSums(ensemble_matrix)
   #names(counts) = colnames(data)
 
@@ -187,8 +189,9 @@ build.UBaymodel = function(data, target, 															# data + labels
                     method = method,
                     nr_features = nr_features,
                     dmax = dmax),
-      #output = list(counts = counts)
-      output = count_list
+      output = ensemble_matrix
+      #output = counts
+      #output = count_list
     )
   )
   class(obj) = "UBaymodel"

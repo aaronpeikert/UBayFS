@@ -30,7 +30,6 @@ train.UBaymodel = function(x){
     x$output <- train_GA(alpha,
                          #delta,
                          x$ensemble.params$output,
-                         x$ensemble.params$input$dmax,
                          x$user.params$constraints,
                          x$user.params$block_constraints,
                          x$optim.params,
@@ -41,7 +40,6 @@ train.UBaymodel = function(x){
     x$output <- train_MH(alpha,
                          #delta,
                          x$ensemble.params$output,
-                         x$ensemble.params$input$dmax,
                          x$user.params$constraints,
                          x$user.params$block_constraints,
                          x$optim.params,
@@ -54,28 +52,37 @@ train.UBaymodel = function(x){
   return(x)
 }
 
-train_GA <- function(weights, counts, dmax, constraints, block_constraints, optim_params, feat_names){
+train_GA <- function(weights, counts, constraints, block_constraints, optim_params, feat_names){
 
-  target_fct <- function(state){return(posterior(state,
-                                                 constraints = constraints,
-                                                 block_constraints = block_constraints,
-                                                 weights = weights,
-                                                 counts = counts,
-                                                 dmax = dmax,
-                                                 log = TRUE))}
+  target_fct <- function(x){
+    if(length(x) == length(weights)){
+      state = x
+      covariates = NULL
+    }
+    else{
+      state = x[1:length(weights)]
+      covariates = matrix(NA, nrow = length(weights), ncol = length(weights))
+      covariates[upper.tri(covariates)] <- x[(length(weights) + 1): length(x)]
+    }
+    return(posterior(state,
+                     constraints = constraints,
+                     block_constraints = block_constraints,
+                     weights = weights,
+                     counts = counts,
+                     covariates = covariates,
+                     log = TRUE))}
 
   # Greedy algorithm to select starting vectors
-  x_start = sampleInitial(post_scores = weights + as.numeric(counts[[1]]),
+  x_start = sampleInitial(post_scores = weights + colSums(counts),
                           constraints = constraints,
                           block_constraints = block_constraints,
                           size = optim_params$popsize)
-
 
   optim = ga(type = "binary",								# use GA for optimization
              fitness = target_fct,
              lower = 0,
              upper = 1,
-             nBits = length(weights),
+             nBits = length(weights) + length(weights) * (length(weights) - 1)/2,
              maxiter = optim_params$maxiter,
              popSize = optim_params$popsize,
              suggestions = x_start
@@ -94,19 +101,29 @@ train_GA <- function(weights, counts, dmax, constraints, block_constraints, opti
 
 #' @importFrom plyr count
 
-train_MH = function(weights, counts, dmax, constraints, block_constraints, optim_params, feat_names){
+train_MH = function(weights, counts, constraints, block_constraints, optim_params, feat_names){
 
-  target_fct <- function(state){return(posterior(state,
-                                                 constraints = constraints,
-                                                 block_constraints = block_constraints,
-                                                 weights = weights,
-                                                 counts = counts,
-                                                 dmax = dmax,
-                                                 log = TRUE))}
+  target_fct <- function(x){
+    if(length(x) == length(weights)){
+      state = x
+      covariates = NULL
+    }
+    else{
+      state = x[1:length(weights)]
+      covariates = matrix(NA, nrow = length(weights), ncol = length(weights))
+      covariates[upper.tri(covariates)] <- x[(length(weights) + 1): length(x)]
+    }
+    return(posterior(state,
+                     constraints = constraints,
+                     block_constraints = block_constraints,
+                     weights = weights,
+                     counts = counts,
+                     covariates = covariates,
+                     log = TRUE))}
 
   # empirical density of proposal
   proposal_sample_size <- optim_params$popsize * optim_params$maxiter
-  proposal_sample <- sampleInitial(post_scores = weights + as.numeric(counts[[1]]),
+  proposal_sample <- sampleInitial(post_scores = weights + colSums(counts),
                                     constraints = constraints,
                                     block_constraints = block_constraints,
                                     size = proposal_sample_size)
@@ -127,7 +144,7 @@ train_MH = function(weights, counts, dmax, constraints, block_constraints, optim
 
   # sample from proposal density
   X <- matrix(, nrow = 0, ncol = length(weights))        # MCMC history
-  x_t = sampleInitial(post_scores = weights + as.numeric(counts[[1]]),
+  x_t = sampleInitial(post_scores = weights + colSums(counts),
                       constraints = constraints,
                       block_constraints = block_constraints,
                       size = optim_params$popsize)
@@ -139,7 +156,7 @@ train_MH = function(weights, counts, dmax, constraints, block_constraints, optim
   for(t in 1:optim_params$maxiter){
     print(t)
     # new sample from proposal density
-    x_new = sampleInitial(post_scores = weights + as.numeric(counts[[1]]),
+    x_new = sampleInitial(post_scores = weights + colSums(counts),
                           constraints = constraints,
                           block_constraints = block_constraints,
                           size = optim_params$popsize)

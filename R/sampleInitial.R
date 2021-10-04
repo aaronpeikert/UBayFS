@@ -87,5 +87,6 @@ sampleInitial <- function(post_scores, constraints, block_constraints, size){
   }))
 
   #return(unique(x_start)) # unique removes duplicated rows (feature sets) before returning
-  return(x_start)
+  #return(x_start) # without covariates
+  return(cbind(x_start, matrix(1, ncol = ncol(x_start) * (ncol(x_start) - 1) / 2, nrow = nrow(x_start))))
 }

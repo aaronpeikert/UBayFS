@@ -10,7 +10,7 @@ getResults <- function(model){
   map = model$output$map
   rownames(map) = NULL
   NO = 1:nrow(map)
-  post_param = model$user.params$weights + model$ensemble.params$output[[1]]
+  post_param = model$user.params$weights + colSums(model$ensemble.params$output)
 
   feature_sets = apply(map, 1, function(x){
     paste0(which(x == 1), collapse = ",")
@@ -38,7 +38,7 @@ getResults <- function(model){
                                         log=TRUE), 2)
 
   log_dirichlet = round(ddirichlet(as.matrix(map + 0.01),
-                                   alpha=post_param,
+                                   alpha=model$user.params$weights,
                                    log=TRUE), 2)
 
   if (model$optim.params$method == "MH") {

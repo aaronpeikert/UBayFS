@@ -4,14 +4,12 @@
 \alias{likelihood}
 \title{likelihood}
 \usage{
-likelihood(state, param, dmax, log = TRUE)
+likelihood(state, param, log = TRUE)
 }
 \arguments{
 \item{state}{a binary membership vector describing a feature set}
 
 \item{param}{a vector of posterior weights for the Multinomial function}
-
-\item{dmax}{an positive integer denoting the maximum degree of feature interactions considered in the model}
 
 \item{log}{whether the admissibility should be returned on log scale}
 }

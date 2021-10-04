@@ -10,7 +10,7 @@ posterior(
   block_constraints,
   weights,
   counts,
-  dmax,
+  covariates = NULL,
   log = TRUE
 )
 }
@@ -23,9 +23,7 @@ posterior(
 
 \item{weights}{a vector of prior weights for the Dirichlet distribution}
 
-\item{counts}{a vector of likelihood counts for the Multinomial distribution}
-
-\item{dmax}{an positive integer denoting the maximum degree of feature interactions considered in the model}
+\item{counts}{a matrix of likelihood counts for the Multinomial distribution}
 
 \item{log}{whether the admissibility should be returned on log scale}
 }

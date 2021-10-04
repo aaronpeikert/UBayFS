@@ -51,7 +51,7 @@ summary.UBaymodel <- function(object,...){
                     " === prior weights === \n",
                     " weights: (", paste0(object$user.params$weights, collapse = ","),") \n\n",
                     " === likelihood === \n",
-                    " 1st order ensemble counts: (", paste0(object$ensemble.params$output[[1]], collapse = ","),") \n\n",
+                    " 1st order ensemble counts: (", paste0(colSums(object$ensemble.params$output), collapse = ","),") \n\n",
                     " === feature selection results (MAP) === \n",
                     ifelse(is.null(object$output$map), "no output produced yet",
                            paste0(

@@ -4,7 +4,7 @@
 \alias{getPosterior}
 \title{Model posterior}
 \usage{
-getPosterior(state, model, log = TRUE)
+getPosterior(state, covariates = NULL, model, log = TRUE)
 }
 \arguments{
 \item{state}{a binary membership vector describing a feature set}

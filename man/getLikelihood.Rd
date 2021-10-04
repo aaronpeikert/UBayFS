@@ -4,7 +4,7 @@
 \alias{getLikelihood}
 \title{Model likelihood}
 \usage{
-getLikelihood(state, model, log = TRUE)
+getLikelihood(state, covariates = NULL, model, log = TRUE)
 }
 \arguments{
 \item{state}{a binary membership vector describing a feature set}
